@@ -7,13 +7,18 @@ import Register from "./pages/Register";
 
 export default function App() {
   return (
-    <div>
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Navbar */}
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
-      </Routes>
+
+      {/* Main content */}
+      <main className="flex-1 min-h-0 overflow-hidden">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </main>
     </div>
   );
 }
