@@ -5,7 +5,7 @@ import careerHubLogo from "../assets/icons/careerHubLogo.png";
 export default function Navbar() {
   return (
     <nav className="sticky top-0 z-[50] bg-white shadow-[0_0.125rem_0.5rem_rgba(0,0,0,0.08)]">
-      <div className="max-w-[80rem] mx-auto flex items-center justify-between px-[2rem] py-[0.75rem]">
+      <div className="max-w-[80rem] mx-auto flex items-center justify-between px-[1rem] sm:px-[2rem] py-[0.4rem] sm:py-[0.75rem]">
         {/* LOGO */}
         <Link to="/" className="flex items-center">
           <img
@@ -16,11 +16,11 @@ export default function Navbar() {
         </Link>
 
         {/* ACTIONS */}
-        <div className="flex items-center gap-[1rem]">
+        <div className="flex items-center gap-[0.5rem] sm:gap-[1rem]">
           {/* Login */}
           <Link
             to="/login"
-            className="px-[1.25rem] py-[0.5rem] rounded-[0.5rem] text-primary border border-primary
+            className="px-[0.75rem] sm:px-[1.25rem] py-[0.15rem] sm:py-[0.5rem] rounded-[0.5rem] text-primary border border-primary
                        hover:bg-primary hover:text-white transition"
           >
             Login
@@ -29,7 +29,7 @@ export default function Navbar() {
           {/* Register */}
           <Link
             to="/register"
-            className="px-[1.25rem] py-[0.5rem] rounded-[0.5rem] bg-secondary text-white
+            className="px-[0.75rem] sm:px-[1.25rem] py-[0.15rem] sm:py-[0.5rem] rounded-[0.5rem] bg-secondary text-white
                        hover:opacity-90 transition"
           >
             Register
