@@ -1,0 +1,385 @@
+import React, { useState } from "react";
+import { Plus, X, Sparkles, Pencil, Trash2, Folder } from "lucide-react";
+import toast from "react-hot-toast";
+import API from "../api/apiCheck";
+import SectionCard from "./SectionCard";
+
+export default function SkillsForm({ profile, refreshProfile }) {
+  const skills = profile?.skills || [];
+  const projects = profile?.projects || [];
+
+  // =============================
+  // SKILLS STATE
+  // =============================
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [skillName, setSkillName] = useState("");
+  const [loadingSkill, setLoadingSkill] = useState(false);
+
+  const handleAddSkill = async () => {
+    if (!skillName.trim()) {
+      toast.error("Skill name required");
+      return;
+    }
+
+    setLoadingSkill(true);
+
+    try {
+      await API.post("/profile/skills", {
+        name: skillName.trim(),
+      });
+
+      toast.success("Skill added");
+      setSkillName("");
+      setIsAdding(false);
+      refreshProfile();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to add skill");
+    } finally {
+      setLoadingSkill(false);
+    }
+  };
+
+  const handleDeleteSkill = async (id) => {
+    try {
+      await API.delete(`/profile/skills/${id}`);
+      toast.success("Skill removed");
+      refreshProfile();
+    } catch {
+      toast.error("Failed to remove skill");
+    }
+  };
+
+  // =============================
+  // PROJECTS STATE
+  // =============================
+
+  const emptyProject = {
+    title: "",
+    description: "",
+    techStack: "",
+    projectUrl: "",
+    githubUrl: "",
+    startDate: "",
+    endDate: "",
+    currentlyWorking: false,
+  };
+
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [editingProjectIndex, setEditingProjectIndex] = useState(null);
+  const [projectForm, setProjectForm] = useState(emptyProject);
+  const [loadingProject, setLoadingProject] = useState(false);
+
+  const handleProjectChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    if (name === "currentlyWorking" && checked) {
+      setProjectForm({ ...projectForm, currentlyWorking: true, endDate: "" });
+      return;
+    }
+
+    setProjectForm({
+      ...projectForm,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const openAddProject = () => {
+    setProjectForm(emptyProject);
+    setEditingProjectIndex(null);
+    setIsProjectFormOpen(true);
+  };
+
+  const openEditProject = (index) => {
+    const project = projects[index];
+
+    setProjectForm({
+      ...project,
+      techStack: project.techStack?.join(", ") || "",
+      startDate: project.startDate?.slice(0, 7),
+      endDate: project.endDate?.slice(0, 7),
+    });
+
+    setEditingProjectIndex(index);
+    setIsProjectFormOpen(true);
+  };
+
+  const handleProjectSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!projectForm.title) {
+      toast.error("Project title is required");
+      return;
+    }
+
+    setLoadingProject(true);
+
+    const cleanedData = {
+      ...projectForm,
+      techStack: projectForm.techStack
+        ? projectForm.techStack.split(",").map((t) => t.trim())
+        : [],
+    };
+
+    try {
+      if (editingProjectIndex !== null) {
+        const id = projects[editingProjectIndex]._id;
+        await API.put(`/profile/projects/${id}`, cleanedData);
+        toast.success("Project updated");
+      } else {
+        await API.post("/profile/projects", cleanedData);
+        toast.success("Project added");
+      }
+
+      setIsProjectFormOpen(false);
+      setProjectForm(emptyProject);
+      refreshProfile();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to save project");
+    } finally {
+      setLoadingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async (index) => {
+    const id = projects[index]._id;
+
+    try {
+      await API.delete(`/profile/projects/${id}`);
+      toast.success("Project deleted");
+      refreshProfile();
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  return (
+    <SectionCard
+      title="Skills"
+      description="Add your technical skills and projects."
+      icon={Sparkles}
+      isComplete={skills.length > 0 || projects.length > 0}
+    >
+      {/* ================= SKILLS ================= */}
+      {!isAdding && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setIsAdding(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-[#0060c4] text-white rounded-lg hover:bg-[#004e9f]"
+          >
+            <Plus size={16} />
+            Add Skill
+          </button>
+        </div>
+      )}
+      {/* Empty State */}{" "}
+      {skills.length === 0 && !isAdding && (
+        <div className="border border-dashed border-gray-300 rounded-xl p-6 text-center text-sm text-gray-500">
+          {" "}
+          No skills added yet.{" "}
+        </div>
+      )}
+      {isAdding && (
+        <div className="flex gap-3 mb-6">
+          <input
+            type="text"
+            placeholder="e.g. React, Node.js"
+            value={skillName}
+            onChange={(e) => setSkillName(e.target.value)}
+            className="flex-1 border rounded-lg px-3 py-2 text-sm"
+          />
+
+          <button
+            onClick={handleAddSkill}
+            className="px-4 py-2 bg-[#0060c4] text-white rounded-lg text-sm"
+          >
+            {loadingSkill ? "Adding..." : "Save"}
+          </button>
+
+          <button
+            onClick={() => {
+              setIsAdding(false);
+              setSkillName("");
+            }}
+            className="px-4 py-2 border rounded-lg text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-3 mb-10">
+        {skills.map((skill) => (
+          <div
+            key={skill._id}
+            className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm"
+          >
+            {skill.name}
+            <button
+              onClick={() => handleDeleteSkill(skill._id)}
+              className="text-gray-500 hover:text-red-500"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+      {/* ================= PROJECTS ================= */}
+      <div className="border-t pt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <Folder size={16} /> Projects
+          </h3>
+
+          {!isProjectFormOpen && (
+            <button
+              onClick={openAddProject}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-[#0060c4] text-white rounded-lg hover:bg-[#004e9f]"
+            >
+              <Plus size={16} />
+              Add Project
+            </button>
+          )}
+        </div>
+
+        {isProjectFormOpen && (
+          <form
+            onSubmit={handleProjectSubmit}
+            className="space-y-4 border rounded-xl p-6 bg-gray-50 mb-6"
+          >
+            <Input
+              label="Project Title *"
+              name="title"
+              value={projectForm.title}
+              onChange={handleProjectChange}
+            />
+
+            <Input
+              label="Tech Stack (comma separated)"
+              name="techStack"
+              value={projectForm.techStack}
+              onChange={handleProjectChange}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                type="month"
+                label="Start Date"
+                name="startDate"
+                value={projectForm.startDate}
+                onChange={handleProjectChange}
+              />
+
+              {!projectForm.currentlyWorking && (
+                <Input
+                  type="month"
+                  label="End Date"
+                  name="endDate"
+                  value={projectForm.endDate}
+                  onChange={handleProjectChange}
+                />
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="currentlyWorking"
+                checked={projectForm.currentlyWorking}
+                onChange={handleProjectChange}
+              />
+              <label className="text-sm">Currently working on this</label>
+            </div>
+
+            <Input
+              label="Live URL"
+              name="projectUrl"
+              value={projectForm.projectUrl}
+              onChange={handleProjectChange}
+            />
+
+            <Input
+              label="GitHub URL"
+              name="githubUrl"
+              value={projectForm.githubUrl}
+              onChange={handleProjectChange}
+            />
+
+            <textarea
+              name="description"
+              value={projectForm.description}
+              onChange={handleProjectChange}
+              placeholder="Describe your project..."
+              className="w-full border rounded-lg px-3 py-2 text-sm h-24"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsProjectFormOpen(false)}
+                className="px-4 py-2 border rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-[#0060c4] text-white rounded-lg text-sm"
+              >
+                {loadingProject ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="space-y-4">
+          {projects.map((project, index) => (
+            <div key={project._id} className="border rounded-xl p-5">
+              <div className="flex justify-between">
+                <div>
+                  <h4 className="font-semibold text-sm">{project.title}</h4>
+
+                  {project.techStack?.length > 0 && (
+                    <p className="text-xs text-gray-500">
+                      {project.techStack.join(", ")}
+                    </p>
+                  )}
+
+                  {project.startDate && (
+                    <p className="text-xs text-gray-500">
+                      {project.startDate?.slice(0, 7)} –{" "}
+                      {project.currentlyWorking
+                        ? "Present"
+                        : project.endDate?.slice(0, 7)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => openEditProject(index)}>
+                    <Pencil size={16} />
+                  </button>
+                  <button onClick={() => handleDeleteProject(index)}>
+                    <Trash2 size={16} className="text-red-500" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SectionCard>
+  );
+}
+
+function Input({ label, ...props }) {
+  return (
+    <div>
+      {label && (
+        <label className="block text-xs mb-1 text-gray-600">{label}</label>
+      )}
+      <input
+        {...props}
+        className="w-full border rounded-lg px-3 py-2 text-sm"
+      />
+    </div>
+  );
+}

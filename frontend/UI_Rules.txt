@@ -1,0 +1,215 @@
+=========================================================
+CAREERHUB ENTERPRISE UI RULES
+=========================================================
+
+This project uses a centralized design system defined in index.css.
+All UI must strictly follow these rules.
+
+DO NOT bypass the system unless absolutely necessary.
+
+---------------------------------------------------------
+1. COLOR USAGE RULES
+---------------------------------------------------------
+
+Use ONLY design tokens.
+
+Primary Color:
+- var(--color-primary-500/600/700)
+
+Secondary (Accent):
+- var(--color-accent-500/600)
+
+Background:
+- bg-app
+- bg-surface
+
+Text:
+- text-primary
+- text-secondary
+- text-muted
+
+Borders:
+- border-app
+
+❌ DO NOT use:
+- random Tailwind colors (bg-blue-500, text-gray-700, etc.)
+- inline hex values
+- hardcoded rgba colors
+
+---------------------------------------------------------
+2. BUTTON RULES
+---------------------------------------------------------
+
+Use:
+- btn-primary
+- btn-secondary
+
+Primary buttons = main actions (Save, Submit, Create)
+Secondary buttons = cancel, back, neutral actions
+
+❌ DO NOT:
+- create custom button styles per page
+- use raw Tailwind button classes
+- override gradients manually
+
+---------------------------------------------------------
+3. INPUT RULES
+---------------------------------------------------------
+
+Use:
+- input-field
+
+All inputs must:
+- Have consistent radius
+- Have focus ring
+- Follow light/dark support
+
+❌ DO NOT:
+- create custom border or padding
+- manually apply focus:ring utilities
+
+---------------------------------------------------------
+4. CARD RULES
+---------------------------------------------------------
+
+Use:
+- card
+
+All content containers must use .card
+Cards must contain:
+- Proper padding (p-6 recommended)
+- Clear section spacing
+
+❌ DO NOT:
+- create shadow-md shadow-lg randomly
+- manually apply rounded-xl inconsistently
+
+---------------------------------------------------------
+5. TYPOGRAPHY RULES
+---------------------------------------------------------
+
+Headings:
+- heading-xl → Page titles
+- heading-lg → Section titles
+- heading-md → Subsection titles
+
+Descriptions:
+- text-secondary
+- text-muted for subtle content
+
+❌ DO NOT:
+- manually set font sizes with text-3xl, text-2xl everywhere
+- override font-weight randomly
+
+---------------------------------------------------------
+6. SPACING RULES
+---------------------------------------------------------
+
+Use:
+- page-container → Main layout wrapper
+- section-spacing → Between major sections
+
+Maintain consistent vertical rhythm.
+
+Avoid random margin stacking like:
+- mt-7, mb-9, etc.
+
+Use Tailwind spacing scale properly:
+- 4, 6, 8, 10, 12
+
+---------------------------------------------------------
+7. SHADOW RULES
+---------------------------------------------------------
+
+Shadows are controlled via:
+- card
+- btn-primary
+- btn-secondary
+
+❌ DO NOT manually use:
+- shadow-xl
+- shadow-2xl
+- custom shadow utilities
+
+---------------------------------------------------------
+8. DARK MODE RULES
+---------------------------------------------------------
+
+All UI must support dark mode automatically.
+
+Do NOT manually write:
+- dark:bg-gray-900
+- dark:text-gray-100
+
+Use token-based classes only.
+
+---------------------------------------------------------
+9. ICON RULES
+---------------------------------------------------------
+
+Use:
+- lucide-react icons only
+
+Icon size:
+- 16px (w-4 h-4) → small UI
+- 20px (w-5 h-5) → nav / buttons
+- 24px (w-6 h-6) → section headers
+
+Icons must align with text using:
+- flex items-center gap-2
+
+---------------------------------------------------------
+10. ANIMATION RULES
+---------------------------------------------------------
+
+Use:
+- animate-fadeIn
+- Framer Motion (subtle transitions only)
+
+❌ DO NOT:
+- add bounce/spin animations
+- use distracting effects
+
+Enterprise UI must feel calm and confident.
+
+---------------------------------------------------------
+11. COMPONENT STRUCTURE RULES
+---------------------------------------------------------
+
+Every page must follow:
+
+page-container
+    → heading-xl (page title)
+    → section-spacing
+        → card
+            → heading-md
+            → content
+
+Avoid deeply nested random divs.
+
+---------------------------------------------------------
+12. CONSISTENCY PRINCIPLE
+---------------------------------------------------------
+
+If a UI element exists once,
+it must look identical everywhere.
+
+No per-page customization unless:
+- It improves clarity
+- It follows design tokens
+
+---------------------------------------------------------
+13. FUTURE SCALABILITY RULE
+---------------------------------------------------------
+
+When creating new components:
+
+- Reuse design tokens
+- Extend system utilities
+- Do NOT invent new visual styles
+
+Enterprise design = predictable + consistent.
+
+---------------------------------------------------------
+END OF RULES
+---------------------------------------------------------
