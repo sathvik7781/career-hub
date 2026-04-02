@@ -1,175 +1,143 @@
-const Job = require("../models/Job");
-const RecruiterProfile = require("../models/RecruiterProfile");
-const Company = require("../models/Company");
+const jobService = require("../services/jobService");
+const { logAction } = require("../utils/auditLogger");
 
-exports.postJob = async (req, res) => {
+exports.postJob = async (req, res, next) => {
   try {
-    // 1. Get Recruiter
-    const recruiter = await RecruiterProfile.findOne({ user: req.user.id });
-    if (!recruiter || !recruiter.company) {
-      return res
-        .status(403)
-        .json({ message: "You must be part of a company to post jobs" });
-    }
-
-    // 2. Check Company Status
-    const company = await Company.findById(recruiter.company);
-    if (!company) {
-      return res.status(404).json({ message: "Company not found" });
-    }
-
-    if (company.verificationStatus !== "approved") {
-      return res.status(403).json({
-        message: `Company is ${company.verificationStatus}. Cannot post jobs.`,
-      });
-    }
-
-    // 3. Create Job
-    const job = await Job.create({
-      ...req.body,
-      company: company._id,
-      recruiter: recruiter._id,
-      status: "active",
+    const job = await jobService.postJob(req.user.id, req.body);
+    await logAction({
+      userId: req.user.id,
+      action: "JOB_POSTED",
+      entityType: "Job",
+      entityId: job._id,
+      details: { title: job.title, company: job.company },
+      req,
     });
 
-    res.status(201).json({ message: "Job posted successfully", job });
+    try {
+      const { emailQueue } = require("../utils/queue");
+      emailQueue.add("send-job-alerts", {
+        type: "SEND_DIGEST",
+        payload: {
+          emails: [], // In a real scenario, fetch users subscribed to this category
+          jobTitle: job.title
+        }
+      });
+    } catch(e) {
+      // Background task failures shouldn't break the response
+      console.error("Queue error:", e);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Job posted successfully",
+      data: job,
+    });
   } catch (err) {
-    console.log("POST JOB ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    next(err);
   }
 };
 
-exports.getJobs = async (req, res) => {
+exports.getJobs = async (req, res, next) => {
   try {
-    const { keyword, location, type } = req.query;
-    const filter = { status: "active", isDeleted: false };
-
-    if (keyword) {
-      filter.$or = [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-      ];
-    }
-    if (location) {
-      filter.location = { $regex: location, $options: "i" };
-    }
-    if (type) {
-      filter.type = type;
-    }
-
-    // Find jobs and populate company
-    // CRITICAL: We need to filter out jobs where company is NOT approved.
-    // Mongoose doesn't support filtering on populated fields easily in allowed `find` query.
-    // Efficient way: Find all approved companies first, then find jobs for those companies.
-
-    const approvedCompanies = await Company.find({
-      verificationStatus: "approved",
-      isDeleted: false,
-    }).select("_id");
-    
-    const approvedCompanyIds = approvedCompanies.map((c) => c._id);
-    filter.company = { $in: approvedCompanyIds };
-
-    const jobs = await Job.find(filter)
-      .populate("company", "name logo location")
-      .sort({ createdAt: -1 });
-
-    res.json({ jobs });
+    const result = await jobService.getJobs(req.query);
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        totalPages: result.totalPages,
+      },
+    });
   } catch (err) {
-    console.log("GET JOBS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    next(err);
   }
 };
 
-exports.getJobById = async (req, res) => {
+exports.getJobById = async (req, res, next) => {
   try {
-    const job = await Job.findById(req.params.id)
-      .populate("company")
-      .populate("recruiter", "designation");
-
-    if (!job || job.isDeleted) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    res.json({ job });
+    const job = await jobService.getJobById(req.params.id);
+    res.status(200).json({
+      success: true,
+      data: job,
+    });
   } catch (err) {
-    console.log("GET JOB ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    next(err);
   }
 };
 
-exports.getMyJobs = async (req, res) => {
+exports.getMyJobs = async (req, res, next) => {
   try {
-    const recruiter = await RecruiterProfile.findOne({ user: req.user.id });
-    if (!recruiter) {
-      return res.status(404).json({ message: "Recruiter profile not found" });
-    }
-
-    const jobs = await Job.find({
-      recruiter: recruiter._id,
-      isDeleted: false,
-    }).sort({ createdAt: -1 });
-
-    res.json({ jobs });
+    const jobs = await jobService.getMyJobs(req.user.id);
+    res.status(200).json({
+      success: true,
+      data: jobs,
+    });
   } catch (err) {
-    console.log("GET MY JOBS ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    next(err);
   }
 };
 
-exports.updateJob = async (req, res) => {
+exports.updateJob = async (req, res, next) => {
   try {
-    const { jobId } = req.params;
-    const updates = req.body;
+    const job = await jobService.updateJob(req.user.id, req.params.jobId, req.body);
+    await logAction({
+      userId: req.user.id,
+      action: "JOB_UPDATED",
+      entityType: "Job",
+      entityId: job._id,
+      details: Object.keys(req.body),
+      req,
+    });
 
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    // Check ownership (simple check: same recruiter or owner of company?)
-    // For now, strict: only the poster.
-    const recruiter = await RecruiterProfile.findOne({ user: req.user.id });
-    
-    if (job.recruiter.toString() !== recruiter._id.toString()) {
-      // Allow if Owner of the company?
-      // For now, simple strict check.
-       return res.status(403).json({ message: "Unauthorized to edit this job" });
-    }
-
-    Object.assign(job, updates);
-    await job.save();
-
-    res.json({ message: "Job updated", job });
+    res.status(200).json({
+      success: true,
+      message: "Job updated",
+      data: job,
+    });
   } catch (err) {
-    console.log("UPDATE JOB ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    next(err);
   }
 };
 
-exports.deleteJob = async (req, res) => {
+exports.deleteJob = async (req, res, next) => {
   try {
-    const { jobId } = req.params;
+    await jobService.deleteJob(req.user.id, req.params.jobId);
+    await logAction({
+      userId: req.user.id,
+      action: "JOB_DELETED",
+      entityType: "Job",
+      entityId: req.params.jobId,
+      req,
+    });
 
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    const recruiter = await RecruiterProfile.findOne({ user: req.user.id });
-    
-    // Allow deletion if poster or maybe Admin/Owner?
-    if (job.recruiter.toString() !== recruiter._id.toString()) {
-       return res.status(403).json({ message: "Unauthorized to delete this job" });
-    }
-
-    job.isDeleted = true;
-    job.status = "closed";
-    await job.save();
-
-    res.json({ message: "Job deleted (archived)" });
+    res.status(200).json({
+      success: true,
+      message: "Job deleted (archived)",
+    });
   } catch (err) {
-    console.log("DELETE JOB ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    next(err);
+  }
+};
+
+exports.adminDeleteJob = async (req, res, next) => {
+  try {
+    await jobService.adminDeleteJob(req.params.jobId);
+    res.status(200).json({ success: true, message: "Job removed by admin" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.adminGetAllJobs = async (req, res, next) => {
+  try {
+    const result = await jobService.getJobs({ ...req.query, adminView: true });
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: { total: result.total, page: result.page, totalPages: result.totalPages },
+    });
+  } catch (err) {
+    next(err);
   }
 };

@@ -1,37 +1,80 @@
-import React from "react";
+import { useState } from "react";
+import { Button } from "../UI/FormElements";
 
+/**
+ * ConfirmModal
+ *
+ * Props:
+ *  - isOpen: boolean
+ *  - title: string
+ *  - message: string
+ *  - confirmLabel: string (default "Confirm")
+ *  - cancelLabel: string (default "Cancel")
+ *  - variant: "danger" | "primary" (default "primary")
+ *  - withReason: boolean — shows a textarea for a reason (e.g. rejection)
+ *  - reasonPlaceholder: string
+ *  - onConfirm: (reason?: string) => void
+ *  - onCancel: () => void
+ */
 export default function ConfirmModal({
-  open,
-  onClose,
-  onConfirm,
+  isOpen,
   title,
-  description,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  message,
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  variant = "primary",
+  withReason = false,
+  reasonPlaceholder = "Enter reason...",
+  onConfirm,
+  onCancel,
 }) {
-  if (!open) return null;
+  const [reason, setReason] = useState("");
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    onConfirm(withReason ? reason : undefined);
+    setReason("");
+  };
+
+  const handleCancel = () => {
+    setReason("");
+    onCancel();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl animate-modalEnter p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">{title}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={handleCancel}
+      />
 
-        <p className="text-sm text-gray-500 mb-6">{description}</p>
+      {/* Modal */}
+      <div className="relative bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-app">
+        <h3 className="heading-md text-primary mb-2">{title}</h3>
+        <p className="text-secondary text-sm mb-4">{message}</p>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-100 transition"
+        {withReason && (
+          <textarea
+            className="input-field min-h-[80px] mb-4"
+            placeholder={reasonPlaceholder}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        )}
+
+        <div className="flex gap-3 justify-end">
+          <Button variant="secondary" onClick={handleCancel}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant={variant}
+            onClick={handleConfirm}
+            disabled={withReason && !reason.trim()}
           >
-            {cancelText}
-          </button>
-
-          <button
-            onClick={onConfirm}
-            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
-          >
-            {confirmText}
-          </button>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
     </div>

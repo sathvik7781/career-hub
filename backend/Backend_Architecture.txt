@@ -1,0 +1,317 @@
+=========================================================
+CAREERHUB BACKEND ARCHITECTURE
+ENTERPRISE MODULAR LAYERED DESIGN
+=========================================================
+
+STACK
+---------------------------------------------------------
+Node.js
+Express
+MongoDB (Mongoose)
+JWT (Access + Refresh)
+Role-Based Access Control
+Centralized Error Handling
+
+ARCHITECTURE STYLE
+---------------------------------------------------------
+Feature-Based Modular + Layered Architecture
+
+Each feature must be isolated inside its own module.
+
+Request Flow:
+
+Route
+  → Controller
+      → Service
+          → Repository
+              → Database
+
+Controllers must remain thin.
+Business logic must live inside Services.
+Database logic must live inside Repositories.
+
+=========================================================
+PROJECT STRUCTURE
+=========================================================
+
+backend/
+  src/
+    config/
+      db.js
+      env.js
+
+    modules/
+
+      auth/
+        auth.routes.js
+        auth.controller.js
+        auth.service.js
+        auth.repository.js
+        auth.validation.js
+
+      user/
+        user.model.js
+        user.repository.js
+        user.service.js
+
+      profile/
+        profile.routes.js
+        profile.controller.js
+        profile.service.js
+        profile.repository.js
+        profile.model.js
+
+      job/
+        job.routes.js
+        job.controller.js
+        job.service.js
+        job.repository.js
+        job.model.js
+
+      company/
+        company.routes.js
+        company.controller.js
+        company.service.js
+        company.repository.js
+        company.model.js
+
+      application/
+        application.routes.js
+        application.controller.js
+        application.service.js
+        application.repository.js
+        application.model.js
+
+      admin/
+        admin.routes.js
+        admin.controller.js
+        admin.service.js
+
+    middlewares/
+      auth.middleware.js
+      role.middleware.js
+      error.middleware.js
+      validation.middleware.js
+
+    utils/
+      appError.js
+      token.service.js
+      password.service.js
+      email.service.js
+
+    app.js
+
+  server.js
+
+=========================================================
+LAYER RESPONSIBILITY RULES
+=========================================================
+
+1. ROUTES
+---------------------------------------------------------
+- Define endpoints only
+- Attach middlewares
+- Never contain business logic
+- Never access database directly
+
+2. CONTROLLERS
+---------------------------------------------------------
+- Extract request data
+- Call service methods
+- Return formatted response
+- No business logic
+- No database queries
+
+Controller must NOT:
+- Use Mongoose directly
+- Contain role checks (unless trivial)
+- Perform complex validation
+
+3. SERVICES
+---------------------------------------------------------
+- Contain all business logic
+- Coordinate repositories
+- Enforce role rules
+- Handle transactions
+- Throw structured errors
+
+Service must NOT:
+- Use Express objects (req, res)
+- Send responses
+- Access raw HTTP headers
+
+4. REPOSITORIES
+---------------------------------------------------------
+- Only database interaction
+- No business rules
+- No validation logic
+- No response formatting
+
+Repository must:
+- Return pure database results
+- Use Mongoose models only
+
+=========================================================
+AUTH ARCHITECTURE
+=========================================================
+
+Access Token:
+- Short-lived
+- Sent in Authorization header
+- Stored in frontend memory/localStorage
+
+Refresh Token:
+- HTTP-only cookie
+- Rotated on refresh
+- Verified on refresh endpoint
+
+AUTH FLOW
+---------------------------------------------------------
+Login:
+- Validate credentials
+- Generate access + refresh
+- Store refresh in cookie
+
+Refresh:
+- Validate refresh token
+- Verify passwordChangedAt
+- Issue new access token
+
+Logout:
+- Clear refresh token cookie
+- Invalidate if implementing token store
+
+Security Rules:
+- Never store refresh token in localStorage
+- Never trust frontend for role validation
+- Always validate user.isActive
+
+=========================================================
+ROLE BASED ACCESS CONTROL
+=========================================================
+
+Roles:
+- seeker
+- recruiter
+- admin
+
+Implementation:
+- auth.middleware → verifies JWT
+- role.middleware → checks allowed roles
+
+Example:
+router.post("/job", authMiddleware, roleMiddleware("recruiter"), ...)
+
+Role checks must NEVER depend on frontend.
+
+=========================================================
+ERROR HANDLING STANDARD
+=========================================================
+
+All errors must go through centralized error middleware.
+
+Standard Error Response:
+
+{
+  success: false,
+  message: "Readable error message",
+  code: "OPTIONAL_ERROR_CODE"
+}
+
+Rules:
+- Never expose raw DB errors
+- Never expose stack traces in production
+- Use custom AppError class
+
+=========================================================
+DATABASE DESIGN RULES
+=========================================================
+
+- Each module owns its schema
+- No cross-module schema coupling
+- Use indexes on searchable fields
+- Use select:false for sensitive fields
+- Keep models clean (no heavy logic)
+
+Business logic must not exist in model files.
+
+=========================================================
+VALIDATION STRATEGY
+=========================================================
+
+Validation must occur at:
+
+1. Request level (validation middleware)
+2. Business rule level (service layer)
+
+Never trust client input.
+
+=========================================================
+SECURITY HARDENING
+=========================================================
+
+Must include:
+
+- helmet
+- rate limiting
+- CORS configuration
+- Input sanitization
+- Password hashing (bcrypt)
+- Token expiration strategy
+
+=========================================================
+SCALABILITY PRINCIPLES
+=========================================================
+
+Backend must be:
+
+- Stateless
+- Horizontally scalable
+- Modular
+- Decoupled
+- Testable
+
+Adding new feature must NOT require:
+- Editing auth module
+- Editing existing modules
+- Changing core architecture
+
+=========================================================
+PERFORMANCE STRATEGY
+=========================================================
+
+- Use lean() for read-only queries
+- Use proper indexing
+- Avoid unnecessary population
+- Paginate list endpoints
+- Use projection where possible
+
+=========================================================
+FUTURE EXTENSIBILITY
+=========================================================
+
+Architecture must support:
+
+- Background job queue
+- Email service abstraction
+- File storage service
+- Notification system
+- Microservice extraction
+- Multi-tenant support
+- Audit logs
+- Analytics
+
+=========================================================
+CODING RULES
+=========================================================
+
+- Use async/await
+- No callback patterns
+- No mixing require/import styles
+- No circular dependencies
+- One responsibility per file
+- One export per service function
+
+=========================================================
+END OF ARCHITECTURE
+=========================================================

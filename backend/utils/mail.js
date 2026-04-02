@@ -10,15 +10,20 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendOtpEmail = async (to, otp) => {
-  await transporter.sendMail({
-    from: `"Career Hub" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: "Email verification OTP",
-    html: `
-      <h2>Your OTP code is: <strong>${otp}</strong></h2>
-      <p>This OTP is valid for 5 minutes.</p>
-    `,
-  });
+  try {
+    await transporter.sendMail({
+      from: `"Career Hub" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: "Your CareerHub verification code",
+      html: `
+        <h2>Your OTP code is: <strong>${otp}</strong></h2>
+        <p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>
+      `,
+    });
+  } catch (err) {
+    console.error("Mail send failed:", err.message);
+    throw new Error("Failed to send OTP email. Please try again.");
+  }
 };
 
 module.exports = {

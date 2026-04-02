@@ -16,7 +16,7 @@ export function Button({
     secondary: "btn-secondary",
     outline: "border border-app text-primary hover:bg-gray-50 dark:hover:bg-slate-800",
     ghost: "text-secondary hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary",
-    danger: "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+    danger: "bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-lg text-sm shadow-sm"
   };
 
   return (

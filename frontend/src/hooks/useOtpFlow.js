@@ -1,70 +1,70 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+const OTP_COOLDOWN_SECONDS = 60;
 
 export function useOtpFlow(storageKey) {
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
-  const [resendCooldown, setResendCooldown] = useState(0);
   const [otpSentAt, setOtpSentAt] = useState(null);
-  const [isRestored, setIsRestored] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Restore state on mount
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.email) setEmail(parsed.email);
-        if (parsed.step) setStep(parsed.step);
-        if (parsed.otpSentAt) {
-          setOtpSentAt(parsed.otpSentAt);
-          const elapsed = Math.floor((Date.now() - parsed.otpSentAt) / 1000);
-          const remaining = 60 - elapsed;
-          if (remaining > 0) {
-            setResendCooldown(remaining);
-          }
-        }
-      } catch {
-        localStorage.removeItem(storageKey);
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved);
+      const savedEmail = parsed.email || "";
+      const savedStep = parsed.step || "email";
+      const savedOtpSentAt = parsed.otpSentAt || null;
+
+      setEmail(savedEmail);
+      setStep(savedStep === "otp" && !savedEmail ? "email" : savedStep);
+      setOtpSentAt(savedOtpSentAt);
+
+      if (savedOtpSentAt) {
+        const elapsed = Math.floor((Date.now() - savedOtpSentAt) / 1000);
+        const remaining = Math.max(0, OTP_COOLDOWN_SECONDS - elapsed);
+        setResendCooldown(remaining);
       }
+    } catch {
+      localStorage.removeItem(storageKey);
     }
-    setIsRestored(true);
   }, [storageKey]);
 
-  // Persist state on change
   useEffect(() => {
-    if (!isRestored) return;
     localStorage.setItem(
       storageKey,
-      JSON.stringify({
-        step,
-        email,
-        otpSentAt,
-      }),
+      JSON.stringify({ step, email, otpSentAt }),
     );
-  }, [step, email, otpSentAt, storageKey, isRestored]);
+  }, [storageKey, step, email, otpSentAt]);
 
-  // Handle fallback if no email is present
   useEffect(() => {
-    if (isRestored && step !== "email" && !email) {
-      setStep("email");
-    }
-  }, [step, email, isRestored]);
+    if (resendCooldown <= 0) return;
 
-  // Timer for resend cooldown
-  useEffect(() => {
-    if (resendCooldown <= 0) return undefined;
-
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => prev - 1);
+    const timer = window.setInterval(() => {
+      setResendCooldown((previous) => {
+        if (previous <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+        return previous - 1;
+      });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, [resendCooldown]);
 
   const handleOtpSent = () => {
-    setOtpSentAt(Date.now());
-    setResendCooldown(60);
+    if (!email) {
+      setStep("email");
+      return;
+    }
+
+    const sentAt = Date.now();
     setStep("otp");
+    setOtpSentAt(sentAt);
+    setResendCooldown(OTP_COOLDOWN_SECONDS);
   };
 
   const resetFlow = () => {
@@ -80,6 +80,7 @@ export function useOtpFlow(storageKey) {
     setStep,
     email,
     setEmail,
+    otpSentAt,
     resendCooldown,
     handleOtpSent,
     resetFlow,

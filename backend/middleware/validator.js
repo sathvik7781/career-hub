@@ -56,3 +56,25 @@ exports.validateBasicInfo = [
     .isIn(["Male", "Female", "Other"])
     .withMessage("Invalid gender"),
 ];
+
+// 🔹 Job Posting Validation
+exports.validateJob = [
+  body("title").trim().notEmpty().withMessage("Title is required"),
+  body("description").trim().notEmpty().withMessage("Description is required"),
+  body("type")
+    .isIn(["Full-time", "Part-time", "Contract", "Internship", "Freelance"])
+    .withMessage("Invalid job type"),
+  body("location").trim().notEmpty().withMessage("Location is required"),
+];
+
+// 🔹 Company Registration Validation
+exports.validateCompany = [
+  body("name").trim().notEmpty().withMessage("Company name is required"),
+  body("description").trim().notEmpty().withMessage("Description is required"),
+  body("location").trim().notEmpty().withMessage("Location is required"),
+];
+
+// 🔹 Application Submission Validation
+exports.validateApplication = [
+  body("jobId").isMongoId().withMessage("Invalid Job ID"),
+];

@@ -18,8 +18,7 @@ const calculateSeekerProfileCompletion = (profile) => {
     profile.basicInfo.firstName &&
     profile.basicInfo.phone &&
     profile.basicInfo.city &&
-    profile.basicInfo.country &&
-    profile.basicInfo.profileImageId
+    profile.basicInfo.country
   ) {
     percentage += SECTION_WEIGHTS.basicInfo;
     completedSections.push("basic");
@@ -52,7 +51,7 @@ const calculateSeekerProfileCompletion = (profile) => {
     completedSections.push("skills");
   }
 
-  if (profile.resumeFileId) {
+  if (profile.resumeUrl) {
     percentage += SECTION_WEIGHTS.resume;
     completedSections.push("resume");
   }

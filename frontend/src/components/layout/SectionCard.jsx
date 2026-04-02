@@ -86,7 +86,7 @@ export default function SectionCard({
       </div>
 
       {/* Body */}
-      <div className="p-5 sm:p-6 animate-fadeIn text-primary">{children}</div>
+      <div className="p-6 sm:p-10 animate-fadeIn text-primary">{children}</div>
     </div>
   );
 }

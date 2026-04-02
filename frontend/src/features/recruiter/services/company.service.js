@@ -1,52 +1,61 @@
-import API from "../../../api/apiCheck";
+import API from "../../../api/api";
 
 export const companyService = {
   getMyCompany: async () => {
-    const { data } = await API.get("/company/me");
-    return data;
+    const res = await API.get("/company/me");
+    return res.data.data;
   },
 
   registerCompany: async (companyData) => {
-    const { data } = await API.post("/company/register", companyData);
-    return data;
+    const res = await API.post("/company/register", companyData);
+    return res.data.data;
   },
 
   updateCompany: async (companyId, updateData) => {
-    const { data } = await API.put(`/company/update/${companyId}`, updateData);
-    return data;
+    const res = await API.put(`/company/update/${companyId}`, updateData);
+    return res.data.data;
+  },
+
+  getCompanyById: async (companyId) => {
+    const res = await API.get(`/company/${companyId}`);
+    return res.data.data;
   },
 
   getCompanies: async (params) => {
-    const { data } = await API.get("/company", { params });
-    return data;
+    const res = await API.get("/company", { params });
+    return res.data.data;
+  },
+
+  getAdminCompanies: async (params) => {
+    const res = await API.get("/company/admin/all", { params });
+    return res.data.data;
   },
 
   getJoinRequests: async () => {
-    const { data } = await API.get("/company/requests");
-    return data;
+    const res = await API.get("/company/requests");
+    return res.data.data;
   },
 
   requestToJoinCompany: async (companyId) => {
-    const { data } = await API.post(`/company/join/${companyId}`);
-    return data;
+    const res = await API.post(`/company/join/${companyId}`);
+    return res.data.data;
   },
 
   respondToJoinRequest: async (recruiterId, status) => {
-    const { data } = await API.post("/company/respond-request", {
+    const res = await API.post("/company/respond-request", {
       recruiterId,
       status,
     });
-    return data;
+    return res.data.data;
   },
 
   leaveCompany: async () => {
-    const { data } = await API.post("/company/leave");
-    return data;
+    const res = await API.post("/company/leave");
+    return res.data.data;
   },
 
-  // Note: Admin routes usually involve verifying.
   verifyCompany: async (companyId, payload) => {
-    const { data } = await API.put(`/company/verify/${companyId}`, payload);
-    return data;
+    const res = await API.put(`/company/verify/${companyId}`, payload);
+    return res.data.data;
   },
 };

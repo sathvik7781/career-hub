@@ -3,10 +3,6 @@ const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 const { validate, validateBasicInfo } = require("../middleware/validator");
 
-router.get("/profile", authMiddleware, (req, res) => {
-  res.json({ message: "Welcome to the website", user: req.user });
-});
-
 const {
   getMyProfile,
   basicInfo,
@@ -27,66 +23,53 @@ const {
   resumeUpload,
   downloadResume,
   deleteResume,
+  saveJob,
+  unsaveJob,
+  getSavedJobs,
 } = require("../controllers/profileController");
-const {
-  uploadResume,
-  uploadAvatar,
-} = require("../middleware/uploadMiddleware");
 
-router.get("/profile/me", authMiddleware, getMyProfile);
+const { uploadResume, uploadAvatar } = require("../middleware/uploadMiddleware");
+const requireRole = require("../middleware/roleMiddleware");
 
-// Basic
-router.post(
-  "/profile/basic-info",
-  authMiddleware,
-  validateBasicInfo,
-  validate,
-  basicInfo,
-);
-router.post(
-  "/profile/upload-avatar",
-  authMiddleware,
-  uploadAvatar,
-  avatarUpload,
-);
-router.delete("/profile/remove-avatar", authMiddleware, removeAvatar);
+router.use(authMiddleware);
 
-// education routes
-router.post("/profile/education", authMiddleware, addEducation);
-router.put("/profile/education/:educationId", authMiddleware, updateEducation);
-router.delete(
-  "/profile/education/:educationId",
-  authMiddleware,
-  deleteEducation,
-);
-// professional routes
-router.put("/profile/professional", authMiddleware, updateProfessional);
-router.post("/profile/experience", authMiddleware, addExperience);
-router.put(
-  "/profile/experience/:experienceId",
-  authMiddleware,
-  updateExperience,
-);
-router.delete(
-  "/profile/experience/:experienceId",
-  authMiddleware,
-  deleteExperience,
-);
+// Generic profile — accessible by all authenticated roles
+router.get("/me", getMyProfile);
 
-// Skills
-router.post("/profile/skills", authMiddleware, addSkill);
-router.delete("/profile/skills/:skillId", authMiddleware, deleteSkill);
-router.post("/profile/projects", authMiddleware, addProject);
-router.put("/profile/projects/:projectId", authMiddleware, updateProject);
-router.delete("/profile/projects/:projectId", authMiddleware, deleteProject);
+// Seeker-only profile segments
+router.use(requireRole("seeker"));
 
-router.post(
-  "/profile/upload-resume",
-  authMiddleware,
-  uploadResume,
-  resumeUpload,
-);
-router.get("/profile/resume", authMiddleware, downloadResume);
-router.delete("/profile/resume", authMiddleware, deleteResume);
+// Basic info & avatar
+router.post("/basic-info", validateBasicInfo, validate, basicInfo);
+router.post("/upload-avatar", uploadAvatar, avatarUpload);
+router.delete("/remove-avatar", removeAvatar);
+
+// Education
+router.post("/education", addEducation);
+router.put("/education/:educationId", updateEducation);
+router.delete("/education/:educationId", deleteEducation);
+
+// Professional & Experience
+router.put("/professional", updateProfessional);
+router.post("/experience", addExperience);
+router.put("/experience/:expId", updateExperience);
+router.delete("/experience/:expId", deleteExperience);
+
+// Skills & Projects
+router.post("/skills", addSkill);
+router.delete("/skills/:skillId", deleteSkill);
+router.post("/projects", addProject);
+router.put("/projects/:projectId", updateProject);
+router.delete("/projects/:projectId", deleteProject);
+
+// Resume
+router.post("/upload-resume", uploadResume, resumeUpload);
+router.get("/resume", downloadResume);
+router.delete("/resume", deleteResume);
+
+// Saved Jobs
+router.get("/saved-jobs", getSavedJobs);
+router.post("/saved-jobs/:jobId", saveJob);
+router.delete("/saved-jobs/:jobId", unsaveJob);
 
 module.exports = router;

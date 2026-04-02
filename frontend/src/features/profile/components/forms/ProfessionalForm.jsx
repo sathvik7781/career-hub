@@ -2,30 +2,26 @@ import React, { useState, useEffect } from "react";
 import { Briefcase, Pencil, Trash2, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import API from "../../../../api/apiCheck";
-import SectionCard from "../../../../components/SectionCard";
+import SectionCard from "../../../../components/layout/SectionCard";
+import { Input, Button, TextArea } from "../../../../components/UI/FormElements";
 import {
-  Input,
-  Button,
-  TextArea,
-} from "../../../../components/UI/FormElements";
+  useUpdateProfessional, useAddExperience, useUpdateExperience, useDeleteExperience,
+} from "../../hooks/useUpdateProfile";
 
-export default function ProfessionalForm({ profile, refreshProfile }) {
+export default function ProfessionalForm({ profile }) {
   const professional = profile?.professional || {};
   const experiences = profile?.experience || [];
 
-  const emptyProfessional = {
-    headline: "",
-    careerLevel: "",
-    summary: "",
-    noExperience: false,
-  };
+  const emptyProfessional = { headline: "", careerLevel: "", summary: "", noExperience: false };
 
   const [isEditingHeader, setIsEditingHeader] = useState(false);
-  const [loadingHeader, setLoadingHeader] = useState(false);
-  const [professionalData, setProfessionalData] = useState(
-    professional || emptyProfessional,
-  );
+  const [professionalData, setProfessionalData] = useState(professional || emptyProfessional);
+
+  const { mutateAsync: updateProfessional, isPending: loadingHeader } = useUpdateProfessional();
+  const { mutateAsync: addExperience, isPending: addingExp } = useAddExperience();
+  const { mutateAsync: updateExperience, isPending: updatingExp } = useUpdateExperience();
+  const { mutate: deleteExperience } = useDeleteExperience();
+  const loadingExp = addingExp || updatingExp;
 
   useEffect(() => {
     setProfessionalData(professional || emptyProfessional);
@@ -51,18 +47,10 @@ export default function ProfessionalForm({ profile, refreshProfile }) {
       toast.error("Headline and Summary are required");
       return;
     }
-
-    setLoadingHeader(true);
     try {
-      await API.put("/profile/professional", professionalData);
-      toast.success("Professional section updated");
-      refreshProfile();
+      await updateProfessional(professionalData);
       setIsEditingHeader(false);
-    } catch (err) {
-      toast.error("Failed to update");
-    } finally {
-      setLoadingHeader(false);
-    }
+    } catch {}
   };
 
   const emptyExperience = {
@@ -79,7 +67,6 @@ export default function ProfessionalForm({ profile, refreshProfile }) {
   const [isExpFormOpen, setIsExpFormOpen] = useState(false);
   const [editingExpIndex, setEditingExpIndex] = useState(null);
   const [expForm, setExpForm] = useState(emptyExperience);
-  const [loadingExp, setLoadingExp] = useState(false);
 
   const handleExpChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -114,45 +101,19 @@ export default function ProfessionalForm({ profile, refreshProfile }) {
 
   const handleExpSubmit = async (e) => {
     e.preventDefault();
-
     if (!expForm.companyName || !expForm.jobTitle || !expForm.startDate) {
       toast.error("Required fields missing");
       return;
     }
-
-    setLoadingExp(true);
-
     try {
-      if (editingExpIndex !== null) {
-        const id = experiences[editingExpIndex]._id;
-        await API.put(`/profile/experience/${id}`, expForm);
-        toast.success("Experience updated");
-      } else {
-        await API.post("/profile/experience", expForm);
-        toast.success("Experience added");
-      }
-
+      if (editingExpIndex !== null) await updateExperience({ id: experiences[editingExpIndex]._id, data: expForm });
+      else await addExperience(expForm);
       setIsExpFormOpen(false);
       setExpForm(emptyExperience);
-      refreshProfile();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to save");
-    } finally {
-      setLoadingExp(false);
-    }
+    } catch {}
   };
 
-  const handleDeleteExp = async (index) => {
-    const id = experiences[index]._id;
-
-    try {
-      await API.delete(`/profile/experience/${id}`);
-      toast.success("Experience deleted");
-      refreshProfile();
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
+  const handleDeleteExp = (index) => deleteExperience(experiences[index]._id);
 
   return (
     <SectionCard

@@ -1,79 +1,42 @@
 import React, { useState } from "react";
 import { Plus, X, Sparkles, Pencil, Trash2, Folder } from "lucide-react";
 import toast from "react-hot-toast";
-import API from "../../../../api/apiCheck";
-import SectionCard from "../../../../components/SectionCard";
-import {
-  Input,
-  Button,
-  TextArea,
-} from "../../../../components/UI/FormElements";
+import SectionCard from "../../../../components/layout/SectionCard";
+import { Input, Button, TextArea } from "../../../../components/UI/FormElements";
+import { useAddSkill, useDeleteSkill, useAddProject, useUpdateProject, useDeleteProject } from "../../hooks/useUpdateProfile";
 
-export default function SkillsForm({ profile, refreshProfile }) {
+export default function SkillsForm({ profile }) {
   const skills = profile?.skills || [];
   const projects = profile?.projects || [];
 
-  // =============================
-  // SKILLS STATE
-  // =============================
-
   const [isAdding, setIsAdding] = useState(false);
   const [skillName, setSkillName] = useState("");
-  const [loadingSkill, setLoadingSkill] = useState(false);
+
+  const { mutateAsync: addSkill, isPending: loadingSkill } = useAddSkill();
+  const { mutate: deleteSkill } = useDeleteSkill();
+  const { mutateAsync: addProject, isPending: addingProject } = useAddProject();
+  const { mutateAsync: updateProject, isPending: updatingProject } = useUpdateProject();
+  const { mutate: deleteProject } = useDeleteProject();
+  const loadingProject = addingProject || updatingProject;
 
   const handleAddSkill = async () => {
-    if (!skillName.trim()) {
-      toast.error("Skill name required");
-      return;
-    }
-
-    setLoadingSkill(true);
-
+    if (!skillName.trim()) { toast.error("Skill name required"); return; }
     try {
-      await API.post("/profile/skills", {
-        name: skillName.trim(),
-      });
-
-      toast.success("Skill added");
+      await addSkill(skillName.trim());
       setSkillName("");
       setIsAdding(false);
-      refreshProfile();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to add skill");
-    } finally {
-      setLoadingSkill(false);
-    }
+    } catch {}
   };
 
-  const handleDeleteSkill = async (id) => {
-    try {
-      await API.delete(`/profile/skills/${id}`);
-      toast.success("Skill removed");
-      refreshProfile();
-    } catch {
-      toast.error("Failed to remove skill");
-    }
-  };
+  const handleDeleteSkill = (id) => deleteSkill(id);
 
-  // =============================
   // PROJECTS STATE
-  // =============================
 
-  const emptyProject = {
-    title: "",
-    description: "",
-    techStack: "",
-    projectUrl: "",
-    githubUrl: "",
-    startDate: "",
-    endDate: "",
-    currentlyWorking: false,
-  };
+  const emptyProject = { title: "", description: "", techStack: "", projectUrl: "", githubUrl: "", startDate: "", endDate: "", currentlyWorking: false };
 
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [editingProjectIndex, setEditingProjectIndex] = useState(null);
   const [projectForm, setProjectForm] = useState(emptyProject);
-  const [loadingProject, setLoadingProject] = useState(false);
 
   const handleProjectChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -111,52 +74,17 @@ export default function SkillsForm({ profile, refreshProfile }) {
 
   const handleProjectSubmit = async (e) => {
     e.preventDefault();
-
-    if (!projectForm.title) {
-      toast.error("Project title is required");
-      return;
-    }
-
-    setLoadingProject(true);
-
-    const cleanedData = {
-      ...projectForm,
-      techStack: projectForm.techStack
-        ? projectForm.techStack.split(",").map((t) => t.trim())
-        : [],
-    };
-
+    if (!projectForm.title) { toast.error("Project title is required"); return; }
+    const cleanedData = { ...projectForm, techStack: projectForm.techStack ? projectForm.techStack.split(",").map((t) => t.trim()) : [] };
     try {
-      if (editingProjectIndex !== null) {
-        const id = projects[editingProjectIndex]._id;
-        await API.put(`/profile/projects/${id}`, cleanedData);
-        toast.success("Project updated");
-      } else {
-        await API.post("/profile/projects", cleanedData);
-        toast.success("Project added");
-      }
-
+      if (editingProjectIndex !== null) await updateProject({ id: projects[editingProjectIndex]._id, data: cleanedData });
+      else await addProject(cleanedData);
       setIsProjectFormOpen(false);
       setProjectForm(emptyProject);
-      refreshProfile();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to save project");
-    } finally {
-      setLoadingProject(false);
-    }
+    } catch {}
   };
 
-  const handleDeleteProject = async (index) => {
-    const id = projects[index]._id;
-
-    try {
-      await API.delete(`/profile/projects/${id}`);
-      toast.success("Project deleted");
-      refreshProfile();
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
+  const handleDeleteProject = (index) => deleteProject(projects[index]._id);
 
   return (
     <SectionCard

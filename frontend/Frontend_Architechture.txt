@@ -1,0 +1,357 @@
+=========================================================
+CAREERHUB FRONTEND ARCHITECTURE
+ENTERPRISE FEATURE-BASED STRUCTURE
+=========================================================
+
+STACK
+---------------------------------------------------------
+React
+React Router
+React Query (Server State)
+Axios (API Layer)
+Tailwind CSS (Design System)
+Context API (Global State)
+Framer Motion (Transitions)
+
+ARCHITECTURE STYLE
+---------------------------------------------------------
+Feature-Based Modular Architecture
+with Clean Separation of Concerns
+
+Core Principle:
+UI → Hook → React Query → Service → API Client → Backend
+
+No component should directly call axios.
+No page should contain business logic.
+No API endpoint string should exist outside service files.
+
+=========================================================
+ROOT STRUCTURE
+=========================================================
+
+frontend/
+  src/
+    api/
+      apiClient.js
+
+    context/
+      AuthContext.jsx
+      ThemeContext.jsx
+
+    components/
+      layout/
+      common/
+      ui/
+
+    features/
+      auth/
+      profile/
+      recruiter/
+      seeker/
+      admin/
+
+    hooks/
+    pages/
+    services/
+
+    App.jsx
+    main.jsx
+    index.css
+
+=========================================================
+FOLDER RESPONSIBILITIES
+=========================================================
+
+1. api/
+---------------------------------------------------------
+Contains:
+- apiClient.js (Axios instance)
+- Interceptors
+- Token handling
+
+Rules:
+- Only one axios instance
+- Refresh logic lives here
+- No UI imports
+
+---------------------------------------------------------
+
+2. context/
+---------------------------------------------------------
+Global app-level state only.
+
+AuthContext:
+- user
+- login
+- logout
+- session rehydration
+- isAuthenticated
+
+ThemeContext:
+- theme state
+- toggleTheme
+
+Rules:
+- No business logic
+- No API calls except session rehydration
+
+---------------------------------------------------------
+
+3. components/
+---------------------------------------------------------
+Reusable, generic components.
+
+layout/
+  Navbar
+  PageTransition
+  SectionCard
+
+common/
+  ConfirmModal
+  Shared modals
+
+ui/
+  Button
+  InputField
+  FormElements
+
+Rules:
+- No feature logic
+- No API calls
+- No role-based decisions
+
+Pure presentation only.
+
+---------------------------------------------------------
+
+4. features/
+---------------------------------------------------------
+Each feature is isolated.
+
+Example:
+
+features/
+  profile/
+    components/
+    hooks/
+    services/
+    pages/
+
+  recruiter/
+    components/
+    hooks/
+    services/
+    pages/
+
+  seeker/
+    components/
+    hooks/
+    services/
+    pages/
+
+  admin/
+    components/
+    hooks/
+    services/
+    pages/
+
+Rules:
+- Each feature owns its hooks
+- Each feature owns its services
+- Cross-feature imports must be minimal
+
+---------------------------------------------------------
+
+5. hooks/
+---------------------------------------------------------
+Reusable global hooks.
+
+Examples:
+- useAuthFlowEngine
+- useOtpFlow
+- usePasswordValidation
+
+Rules:
+- No UI rendering
+- No JSX
+- Business logic only
+
+---------------------------------------------------------
+
+6. services/
+---------------------------------------------------------
+All backend communication.
+
+Rules:
+- Only call apiClient
+- Return response.data
+- No toast
+- No UI logic
+- No navigation
+
+Example:
+
+profile.service.js
+job.service.js
+company.service.js
+
+---------------------------------------------------------
+
+7. pages/
+---------------------------------------------------------
+Route-level components only.
+
+Rules:
+- Compose feature components
+- Minimal logic
+- No heavy business rules
+- Use hooks for logic
+
+---------------------------------------------------------
+
+DATA FLOW STANDARD
+=========================================================
+
+Component
+   ↓
+Custom Hook (Feature Hook)
+   ↓
+React Query
+   ↓
+Service
+   ↓
+apiClient
+   ↓
+Backend
+
+No shortcuts allowed.
+
+=========================================================
+REACT QUERY RULES
+=========================================================
+
+Use:
+- useQuery → fetch
+- useMutation → create/update/delete
+- queryClient.invalidateQueries → refetch
+
+Never:
+- use useEffect for API calls
+- store server data in useState
+- duplicate fetching logic
+
+=========================================================
+AUTH STRUCTURE
+=========================================================
+
+AuthContext handles:
+- login
+- logout
+- user state
+- session restore
+
+ProtectedRoute handles:
+- authentication
+- role-based routing
+
+Navbar uses:
+- isAuthenticated
+- role
+
+Token must NOT be stored inside user object.
+
+=========================================================
+ROLE-BASED RENDERING RULE
+=========================================================
+
+Role checks must happen:
+
+1. At route level (ProtectedRoute)
+2. At feature boundary
+
+Avoid scattered inline checks like:
+{user.role === 'admin' && ...}
+
+=========================================================
+UI SYSTEM RULE
+=========================================================
+
+All styling must follow index.css design tokens.
+
+Use:
+- btn-primary
+- btn-secondary
+- input-field
+- card
+- heading-xl / heading-md
+- page-container
+
+No raw Tailwind colors.
+No inline hex values.
+
+=========================================================
+ERROR HANDLING STRATEGY
+=========================================================
+
+Service:
+- throws error
+
+Hook:
+- handles mutation errors
+
+UI:
+- shows toast
+
+No service should call toast directly.
+
+=========================================================
+PERFORMANCE RULES
+=========================================================
+
+- Avoid unnecessary re-renders
+- Memoize expensive components
+- Use stable query keys
+- Use React Query cache effectively
+
+=========================================================
+SCALABILITY PRINCIPLE
+=========================================================
+
+Adding a new feature must require:
+
+- Creating new feature folder
+- Creating service file
+- Creating hooks
+- Adding route
+
+Must NOT require editing:
+- apiClient
+- AuthContext
+- Core layout
+
+=========================================================
+CODE DISCIPLINE
+=========================================================
+
+- No business logic in UI components
+- No axios calls in components
+- No token logic outside apiClient
+- One responsibility per file
+- Small focused components
+
+=========================================================
+FUTURE READY
+=========================================================
+
+Architecture must support:
+
+- Notifications
+- Real-time updates
+- Subscription system
+- Multi-role dashboards
+- Admin moderation tools
+- Large scale feature growth
+
+=========================================================
+END OF ARCHITECTURE
+=========================================================

@@ -210,6 +210,331 @@ When creating new components:
 
 Enterprise design = predictable + consistent.
 
----------------------------------------------------------
-END OF RULES
----------------------------------------------------------
+
+=========================================================
+CAREERHUB ENTERPRISE UI RULES (WITH RESPONSIVENESS)
+=========================================================
+
+This project uses a centralized design system defined in index.css.
+All UI must strictly follow these rules.
+
+Enterprise UI = Consistent + Responsive + Predictable.
+
+=========================================================
+0. RESPONSIVE PHILOSOPHY
+=========================================================
+
+Mobile First Approach.
+
+Always design in this order:
+1. Mobile (default)
+2. Tablet (md:)
+3. Desktop (lg:)
+4. Large Desktop (xl:)
+
+Never design desktop first.
+
+Breakpoints:
+- sm → 640px
+- md → 768px
+- lg → 1024px
+- xl → 1280px
+
+Avoid overusing breakpoints.
+Use only when layout truly changes.
+
+=========================================================
+1. LAYOUT RESPONSIVENESS RULES
+=========================================================
+
+Use container system:
+
+<div class="page-container">
+    max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
+</div>
+
+Rules:
+
+✔ Padding must scale with screen size
+✔ Content must never touch screen edges
+✔ Avoid fixed widths (w-96, w-[800px], etc.)
+✔ Use max-w-* not fixed widths
+
+Example:
+
+<div class="max-w-2xl w-full">
+
+=========================================================
+2. GRID SYSTEM RULES
+=========================================================
+
+Default pattern:
+
+grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
+
+Rules:
+
+✔ Mobile → Always 1 column
+✔ Tablet → 2 columns max
+✔ Desktop → 3 columns max
+✔ Avoid 4+ columns unless data-heavy admin view
+
+Never use:
+grid-cols-4 on mobile
+hard-coded widths inside grids
+
+=========================================================
+3. CARD RESPONSIVENESS
+=========================================================
+
+Cards must:
+
+✔ Expand full width on mobile
+✔ Maintain comfortable padding
+✔ Stack vertically on small screens
+
+Do NOT:
+- Force side-by-side cards on mobile
+- Use fixed heights
+
+Use:
+
+flex flex-col gap-6
+or
+grid grid-cols-1 md:grid-cols-2 gap-6
+
+=========================================================
+4. FORM RESPONSIVENESS
+=========================================================
+
+Forms must follow:
+
+Mobile:
+- Single column
+- Full width inputs
+
+Desktop:
+- Optional 2-column grouping for related fields
+
+Example:
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+Rules:
+
+✔ Keep form max width: max-w-2xl
+✔ Center forms on large screens
+✔ Avoid full-width stretched forms on desktop
+
+Never:
+- Use 3+ column forms
+- Place inputs side by side on mobile
+
+=========================================================
+5. BUTTON RESPONSIVENESS
+=========================================================
+
+Mobile:
+✔ Buttons full width when primary CTA
+✔ Stack vertically if multiple actions
+
+Desktop:
+✔ Buttons inline when appropriate
+✔ Use flex gap-3 for spacing
+
+Example:
+
+<div class="flex flex-col sm:flex-row gap-3">
+
+Never:
+- Cramped inline buttons on mobile
+- Tiny buttons on touch devices
+
+=========================================================
+6. NAVBAR RESPONSIVENESS
+=========================================================
+
+Desktop:
+✔ Horizontal layout
+✔ Inline navigation
+
+Mobile:
+✔ Collapsible menu
+✔ Slide-down or drawer menu
+✔ Icons visible
+✔ No horizontal overflow
+
+Never:
+- Overflow menu items
+- Shrink text too small
+
+=========================================================
+7. TABLE RESPONSIVENESS
+=========================================================
+
+Tables must adapt.
+
+For mobile:
+
+Option A:
+- Horizontal scroll
+overflow-x-auto
+
+Option B:
+- Card-style stacked layout (preferred for complex data)
+
+Never:
+- Force large tables on mobile without scroll
+- Shrink font below readable size
+
+=========================================================
+8. TYPOGRAPHY RESPONSIVENESS
+=========================================================
+
+Heading scale must adapt.
+
+Example:
+
+heading-xl:
+text-2xl md:text-3xl
+
+Rules:
+
+✔ Headings slightly smaller on mobile
+✔ Avoid huge titles on small screens
+✔ Maintain hierarchy
+
+Never:
+- text-5xl on mobile
+- Compressed tiny text
+
+=========================================================
+9. SPACING RESPONSIVENESS
+=========================================================
+
+Vertical spacing must scale.
+
+Example:
+
+mt-6 md:mt-8
+
+Rules:
+
+✔ Smaller spacing on mobile
+✔ Larger spacing on desktop
+✔ Maintain vertical rhythm
+
+Avoid:
+- Excess whitespace on small screens
+- Crowded layout on large screens
+
+=========================================================
+10. IMAGE & MEDIA RESPONSIVENESS
+=========================================================
+
+Images must use:
+
+w-full h-auto object-cover
+
+Never:
+- Fixed height images
+- Stretching images
+
+Avatars:
+- w-20 h-20 mobile
+- md:w-24 md:h-24 desktop
+
+=========================================================
+11. MODAL RESPONSIVENESS
+=========================================================
+
+Mobile:
+✔ Full width (px-4)
+✔ Max height with scroll
+✔ Avoid huge padding
+
+Desktop:
+✔ max-w-lg or max-w-xl
+✔ Centered layout
+
+Never:
+- Oversized modal on small screens
+- Hidden overflow content
+
+=========================================================
+12. DATA DENSITY CONTROL
+=========================================================
+
+Mobile:
+✔ Simplify layout
+✔ Hide secondary info if needed
+✔ Use expandable sections
+
+Desktop:
+✔ Show full information
+✔ Use structured layout
+
+=========================================================
+13. TOUCH FRIENDLY DESIGN
+=========================================================
+
+Minimum clickable area:
+48px height recommended
+
+Buttons:
+py-2.5 minimum
+
+Never:
+- Tiny icons without padding
+- Click targets too small
+
+=========================================================
+14. RESPONSIVE ANIMATION RULES
+=========================================================
+
+Animations must:
+
+✔ Be subtle
+✔ Not cause layout shifts
+✔ Be disabled for reduced-motion users (future enhancement)
+
+Never:
+- Use heavy transitions on mobile
+- Trigger scroll jumps
+
+=========================================================
+15. OVERFLOW CONTROL
+=========================================================
+
+Prevent:
+
+✔ Horizontal scroll
+✔ Content breaking layout
+✔ Text overflow
+
+Use:
+
+truncate
+break-words
+overflow-x-auto (only when needed)
+
+=========================================================
+16. ENTERPRISE RESPONSIVENESS CHECKLIST
+=========================================================
+
+Before marking UI complete:
+
+✔ Test on 375px width
+✔ Test on 768px width
+✔ Test on 1024px width
+✔ No horizontal scroll
+✔ No overlapping text
+✔ No clipped buttons
+✔ No stretched forms
+✔ Navbar collapses correctly
+✔ Tables readable on mobile
+✔ Modals usable on mobile
+
+=========================================================
+END OF RESPONSIVE ENTERPRISE UI RULES
+=========================================================

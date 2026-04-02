@@ -17,7 +17,8 @@ const seekerProfileSchema = new mongoose.Schema(
       state: { type: String, trim: true },
       country: { type: String, trim: true },
       gender: { type: String, trim: true },
-      profileImageId: { type: mongoose.Schema.Types.ObjectId },
+      profileImageUrl: { type: String, default: null },
+      profileImagePublicId: { type: String, default: null },
     },
     education: [
       {
@@ -82,7 +83,17 @@ const seekerProfileSchema = new mongoose.Schema(
       },
     ],
 
-    resumeFileId: { type: mongoose.Schema.Types.ObjectId },
+    resumeUrl: { type: String, default: null },
+    resumePublicId: { type: String, default: null },
+    resumeOriginalName: { type: String, default: null },
+
+    savedJobs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Job",
+      },
+    ],
+
     completion: {
       percentage: { type: Number, default: 0 },
       completedSections: { type: [String], default: [] },

@@ -13,20 +13,24 @@ exports.sendOtp = async (email, purpose) => {
   });
 
   const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
   await Otp.findOneAndUpdate(
     { email, purpose },
     {
       otp: hashedOtp,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       attempts: 0,
+      verifiedAt: null,
     },
     { upsert: true, new: true },
   );
 
-  await sendOtpEmail(
-    email,
-    `Your OTP for ${purpose} is ${otp}. It expires in 5 minutes.`,
-  );
+  try {
+    await sendOtpEmail(email, otp);
+  } catch (err) {
+    await Otp.deleteOne({ email, purpose });
+    throw new AppError("Failed to send OTP email. Please try again.", 503);
+  }
 };
 
 exports.verifyOtp = async (email, otp, purpose) => {
@@ -51,6 +55,14 @@ exports.verifyOtp = async (email, otp, purpose) => {
   if (record.otp !== hashedOtp) {
     await Otp.updateOne({ _id: record._id }, { $inc: { attempts: 1 } });
     throw new AppError("Invalid OTP", 400);
+  }
+
+  if (purpose === "register") {
+    await Otp.updateOne(
+      { _id: record._id },
+      { verifiedAt: new Date(), attempts: 0 },
+    );
+    return;
   }
 
   await Otp.deleteMany({ email, purpose });

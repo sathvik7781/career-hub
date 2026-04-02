@@ -2,6 +2,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyService } from "../services/company.service";
 import toast from "react-hot-toast";
 
+export const useAllCompanies = (filters = {}) => {
+  return useQuery({
+    queryKey: ["companies", "all", filters],
+    queryFn: () => companyService.getCompanies({ ...filters, status: "approved" }),
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useCompanyById = (companyId) => {
+  return useQuery({
+    queryKey: ["company", companyId],
+    queryFn: () => companyService.getCompanyById(companyId),
+    enabled: !!companyId,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
 // --- Queries ---
 export const useMyCompany = () => {
   return useQuery({
@@ -37,7 +54,7 @@ export const useRegisterCompany = () => {
     mutationFn: companyService.registerCompany,
     onSuccess: () => {
       toast.success("Company registered! Pending verification.");
-      queryClient.invalidateQueries(["company", "me"]);
+      queryClient.invalidateQueries({ queryKey: ["company", "me"] });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Registration failed");
@@ -52,7 +69,7 @@ export const useUpdateCompany = () => {
       companyService.updateCompany(companyId, data),
     onSuccess: () => {
       toast.success("Company updated successfully!");
-      queryClient.invalidateQueries(["company", "me"]);
+      queryClient.invalidateQueries({ queryKey: ["company", "me"] });
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || "Update failed");
@@ -76,7 +93,7 @@ export const useRespondToJoinRequest = () => {
       companyService.respondToJoinRequest(recruiterId, status),
     onSuccess: (_, variables) => {
       toast.success(`Request ${variables.status}`);
-      queryClient.invalidateQueries(["company", "requests"]);
+      queryClient.invalidateQueries({ queryKey: ["company", "requests"] });
     },
     onError: () => toast.error("Action failed"),
   });
@@ -88,8 +105,8 @@ export const useLeaveCompany = () => {
     mutationFn: companyService.leaveCompany,
     onSuccess: () => {
       toast.success("Left company");
-      queryClient.invalidateQueries(["company", "me"]);
-      queryClient.invalidateQueries(["company", "requests"]);
+      queryClient.invalidateQueries({ queryKey: ["company", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["company", "requests"] });
     },
     onError: (error) =>
       toast.error(error.response?.data?.message || "Failed to leave"),

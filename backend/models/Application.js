@@ -36,7 +36,9 @@ const applicationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent duplicate applications for the same job by the same seeker
+// Prevent duplicate applications
 applicationSchema.index({ job: 1, applicant: 1 }, { unique: true });
+// Fast lookup of all applications by a seeker
+applicationSchema.index({ applicant: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Application", applicationSchema);

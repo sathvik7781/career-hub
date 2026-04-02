@@ -1,47 +1,36 @@
 const multer = require("multer");
+
+// All files go to memory — Cloudinary receives the buffer directly
 const storage = multer.memoryStorage();
 
 const avatarFileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-
-  if (!allowedTypes.includes(file.mimetype)) {
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(file.mimetype)) {
     return cb(new Error("Only JPG, PNG, and WEBP images are allowed"), false);
   }
-
   cb(null, true);
 };
 
-const uploadAvatar = multer({
-  storage,
-  limits: {
-    fileSize: 1 * 1024 * 1024,
-  },
-  fileFilter: avatarFileFilter,
-}).single("avatar");
-
 const resumeFileFilter = (req, file, cb) => {
-  const allowedTypes = [
+  const allowed = [
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ];
-
-  if (!allowedTypes.includes(file.mimetype)) {
+  if (!allowed.includes(file.mimetype)) {
     return cb(new Error("Only PDF, DOC, and DOCX files are allowed"), false);
   }
-
   cb(null, true);
 };
 
-const uploadResume = multer({
+exports.uploadAvatar = multer({
   storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
+  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
+  fileFilter: avatarFileFilter,
+}).single("avatar");
+
+exports.uploadResume = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: resumeFileFilter,
 }).single("resume");
-
-module.exports = {
-  uploadAvatar,
-  uploadResume,
-};

@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import Cropper from "react-easy-crop";
-import API from "../../../../api/apiCheck";
+import { AuthContext } from "../../../../context/AuthContext";
+import API from "../../../../api/api";
 import toast from "react-hot-toast";
 
 export default function AvatarUploadModal({
@@ -10,6 +11,7 @@ export default function AvatarUploadModal({
   setAvatarLoading,
   setAvatarKey,
 }) {
+  const { updateProfileImage } = useContext(AuthContext);
   const [imageSrc, setImageSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -66,9 +68,10 @@ export default function AvatarUploadModal({
       const formData = new FormData();
       formData.append("avatar", croppedBlob, "avatar.jpg");
 
-      await API.post("/profile/upload-avatar", formData);
+      const res = await API.post("/profile/upload-avatar", formData);
 
       toast.success("Avatar updated successfully");
+      updateProfileImage(res.data.data.profileImageUrl);
       refreshProfile();
       setAvatarKey((prev) => prev + 1);
       onClose();
@@ -85,10 +88,10 @@ export default function AvatarUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl animate-modalEnter flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl animate-modalEnter flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {imageSrc ? "Crop Photo" : "Upload Photo"}
           </h2>
 
@@ -128,7 +131,7 @@ export default function AvatarUploadModal({
           ) : (
             <>
               {/* Cropper */}
-              <div className="relative w-full h-[300px] sm:h-[400px] bg-gray-100 rounded-xl overflow-hidden">
+              <div className="relative w-full h-64 bg-gray-100 dark:bg-slate-800 rounded-xl overflow-hidden">
                 <Cropper
                   image={imageSrc}
                   crop={crop}
@@ -161,10 +164,10 @@ export default function AvatarUploadModal({
 
         {/* Footer */}
         {imageSrc && (
-          <div className="px-6 py-4 border-t flex flex-col sm:flex-row justify-end gap-3">
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
             <button
               onClick={onClose}
-              className="px-5 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-100 transition"
+              className="px-5 py-2 rounded-lg border border-gray-300 dark:border-slate-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
             >
               Cancel
             </button>

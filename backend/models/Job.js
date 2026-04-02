@@ -22,6 +22,11 @@ const jobSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    experienceLevel: {
+      type: String,
+      enum: ["Fresher", "Junior", "Mid-Level", "Senior", "Lead", "Any"],
+      default: "Any",
+    },
     salary: {
       min: { type: Number },
       max: { type: Number },
@@ -61,5 +66,10 @@ const jobSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexes for common query patterns
+jobSchema.index({ status: 1, isDeleted: 1, company: 1 });
+jobSchema.index({ recruiter: 1, isDeleted: 1 });
+jobSchema.index({ title: "text", description: "text" }); // Full-text keyword search
 
 module.exports = mongoose.model("Job", jobSchema);
